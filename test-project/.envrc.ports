@@ -1,0 +1,10 @@
+# Port allocation for cluster: test-multicluster-1755117092
+# Generated at: st 13. srpna 2025, 22:31:32 CEST
+
+export TILT_PORT_METRICS=9090
+export TILT_PORT_API=8080
+export TILT_PORT_DEBUG=6060
+export TILT_PORT_WEBHOOK=8443
+export REGISTRY_PORT=5003
+export TILT_PORT=10351
+export CLUSTER_NAME=test-multicluster-1755117092

@@ -1,0 +1,37 @@
+# Test Tiltfile that verifies environment variables
+print("="*50)
+print("TILT TEST ENVIRONMENT VARIABLES")
+print("="*50)
+
+# Core variables
+print("PROJECT_NAME: " + os.environ.get('PROJECT_NAME', 'NOT SET'))
+print("CLUSTER_NAME: " + os.environ.get('CLUSTER_NAME', 'NOT SET'))
+print("REGISTRY_PORT: " + os.environ.get('REGISTRY_PORT', 'NOT SET'))
+print("TILT_PORT: " + os.environ.get('TILT_PORT', 'NOT SET'))
+print("DATA_PATH: " + os.environ.get('DATA_PATH', 'NOT SET'))
+
+# Dynamic TILT_PORT_* allocations
+print("\nDynamic Port Allocations:")
+for key in sorted(os.environ.keys()):
+    if key.startswith('TILT_PORT_'):
+        print(key + ": " + os.environ[key])
+
+print("="*50)
+print("Test environment initialized successfully!")
+print("="*50)
+
+# Create a simple local resource to keep Tilt running
+local_resource(
+    'test-output',
+    cmd='echo "Test environment is running with PROJECT_NAME=$PROJECT_NAME and CLUSTER_NAME=$CLUSTER_NAME"',
+    auto_init=True,
+    labels=['test']
+)
+
+# Create another resource to show port allocations
+local_resource(
+    'show-ports',
+    cmd='echo "API Port: $TILT_PORT_API, Metrics Port: $TILT_PORT_METRICS, Debug Port: $TILT_PORT_DEBUG, Webhook Port: $TILT_PORT_WEBHOOK"',
+    auto_init=True,
+    labels=['test']
+)

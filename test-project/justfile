@@ -1,0 +1,25 @@
+# Import the tilt scripts
+import ".tilt/scripts/justfile"
+
+# Additional test commands
+
+# Show allocated ports from .envrc.ports file
+ports:
+    @if [ -f .envrc.ports ]; then cat .envrc.ports; else echo "No ports allocated yet"; fi
+
+# Clean up port allocation file
+clean:
+    rm -f .envrc.ports
+
+# Show test environment info
+info:
+    @echo "Test Project: test-multicluster"
+    @echo "Scripts location: .tilt/scripts/"
+    @echo "Config location: .tilt/project.env"
+    @echo ""
+    @echo "Available commands:"
+    @echo "  just run         - Start test environment"
+    @echo "  just run true    - Start with data copy"
+    @echo "  just ports       - Show allocated ports"
+    @echo "  just clean       - Clean up port file"
+    @echo "  just info        - Show this info"

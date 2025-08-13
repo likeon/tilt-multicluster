@@ -31,7 +31,9 @@ if command -v systemd-run >/dev/null 2>&1; then
 fi
 
 # Create the kind cluster configuration
-KIND_CONFIG=$(cat <<EOF
+if [ -n "${DATA_PATH}" ]; then
+  # Include data mount if DATA_PATH is set
+  KIND_CONFIG=$(cat <<EOF
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 containerdConfigPatches:
@@ -48,6 +50,23 @@ nodes:
         containerPath: /var/lib/kubelet/config.json
 EOF
 )
+else
+  # No data mount when DATA_PATH is not set
+  KIND_CONFIG=$(cat <<EOF
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+containerdConfigPatches:
+- |-
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:${REGISTRY_PORT}"]
+    endpoint = ["http://${REGISTRY_NAME}:5000"]
+nodes:
+  - role: control-plane
+    extraMounts:
+      - hostPath: "$HOME/.docker/config.json"
+        containerPath: /var/lib/kubelet/config.json
+EOF
+)
+fi
 
 # Run kind create cluster with or without systemd-run based on system requirements
 if [ "$NEEDS_SYSTEMD_RUN" = true ]; then

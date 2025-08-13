@@ -50,15 +50,19 @@ PORTS_FILE_TMP="${PORTS_FILE}.tmp.$$"
 } > "${PORTS_FILE_TMP}"
 mv -f "${PORTS_FILE_TMP}" "${PORTS_FILE}"
 echo "Port allocations written to ${PORTS_FILE}"
-if [ "${COPY_DATA}" = "true" ]; then
-  DATA_PATH="${HOME}/.local/share/${PROJECT_NAME}-${CLUSTER_ID}"
-  echo "Copying data to ${DATA_PATH}"
-  # needs sudo because container data files are owned by whoever
-  sudo cp -a "${DEFAULT_DATA_PATH}" "${DATA_PATH}"
-else
-  DATA_PATH="${DEFAULT_DATA_PATH}"
+
+# Only set DATA_PATH if DATA_FOLDERS is not empty
+if [ -n "${DATA_FOLDERS}" ]; then
+  if [ "${COPY_DATA}" = "true" ]; then
+    DATA_PATH="${HOME}/.local/share/${PROJECT_NAME}-${CLUSTER_ID}"
+    echo "Copying data to ${DATA_PATH}"
+    # needs sudo because container data files are owned by whoever
+    sudo cp -a "${DEFAULT_DATA_PATH}" "${DATA_PATH}"
+  else
+    DATA_PATH="${DEFAULT_DATA_PATH}"
+  fi
+  export DATA_PATH
 fi
-export DATA_PATH
 
 # Function to be executed when the script is started
 start_sequence() {
@@ -73,7 +77,7 @@ stop_sequence() {
     podman rm -f "registry-${CLUSTER_NAME}" 2>/dev/null || true
     podman network rm "kind-${CLUSTER_NAME}" 2>/dev/null || true
 
-    if [ "${COPY_DATA}" = "true" ]; then
+    if [ "${COPY_DATA}" = "true" ] && [ -n "${DATA_PATH}" ]; then
       sudo rm -rf "${DATA_PATH}"
     fi
 

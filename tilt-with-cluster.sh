@@ -4,7 +4,15 @@ set -e
 
 SCRIPT_DIR=$(dirname "$0")
 
-# Export all sourced variables
+# Ensure project.env variables take precedence over existing shell variables
+# Unset readonly status if any and export all sourced variables
+set +a  # Ensure we start clean
+unset PROJECT_NAME DATA_FOLDERS COPY_DATA 2>/dev/null || true
+# Also unset any existing TILT_PORT_* variables to ensure clean slate
+for var in $(env | grep '^TILT_PORT_' | cut -d= -f1); do
+    unset "$var" 2>/dev/null || true
+done
+# Now source with allexport to ensure all variables are exported
 set -a
 source "${SCRIPT_DIR}/../project.env"
 set +a
@@ -25,6 +33,23 @@ for folder in ${DATA_FOLDERS}; do
 done
 CLUSTER_ID="${PROJECT_NAME}-$(date +%s)"
 export CLUSTER_NAME="${CLUSTER_ID}"
+
+# Write allocated ports to .envrc.ports file atomically
+PORTS_FILE="${PWD}/.envrc.ports"
+PORTS_FILE_TMP="${PORTS_FILE}.tmp.$$"
+{
+    echo "# Port allocation for cluster: ${CLUSTER_ID}"
+    echo "# Generated at: $(date)"
+    echo ""
+    for var in $(env | grep '^TILT_PORT_' | cut -d= -f1); do
+        echo "export ${var}=$(eval echo \$$var)"
+    done
+    echo "export REGISTRY_PORT=${REGISTRY_PORT}"
+    echo "export TILT_PORT=${TILT_PORT}"
+    echo "export CLUSTER_NAME=${CLUSTER_NAME}"
+} > "${PORTS_FILE_TMP}"
+mv -f "${PORTS_FILE_TMP}" "${PORTS_FILE}"
+echo "Port allocations written to ${PORTS_FILE}"
 if [ "${COPY_DATA}" = "true" ]; then
   DATA_PATH="${HOME}/.local/share/${PROJECT_NAME}-${CLUSTER_ID}"
   echo "Copying data to ${DATA_PATH}"
@@ -50,6 +75,12 @@ stop_sequence() {
 
     if [ "${COPY_DATA}" = "true" ]; then
       sudo rm -rf "${DATA_PATH}"
+    fi
+
+    # Clean up ports file if it exists and belongs to this cluster
+    if [ -f "${PORTS_FILE}" ] && grep -q "# Port allocation for cluster: ${CLUSTER_ID}" "${PORTS_FILE}" 2>/dev/null; then
+      rm -f "${PORTS_FILE}"
+      echo "Removed port allocations file ${PORTS_FILE}"
     fi
 
     exit 0

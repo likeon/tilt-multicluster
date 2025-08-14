@@ -72,6 +72,14 @@ start_sequence() {
 
 # Function to be executed when the script is stopped
 stop_sequence() {
+    echo "Shutting down Tilt and cleaning up resources..."
+    
+    # First, cleanly shut down Tilt to close all port-forwards
+    tilt down 2>/dev/null || true
+    
+    # Small delay to ensure port-forwards are fully cleaned up
+    sleep 2
+    
     echo "Cleaning up cluster, registry, and network..."
     kind delete cluster --name "${CLUSTER_NAME}"
     podman rm -f "registry-${CLUSTER_NAME}" 2>/dev/null || true

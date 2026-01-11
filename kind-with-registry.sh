@@ -42,6 +42,9 @@ containerdConfigPatches:
     endpoint = ["http://${REGISTRY_NAME}:5000"]
 nodes:
   - role: control-plane
+    # pin to stable version for now
+    # new ones use experimental containerd v2.0
+    image: kindest/node:v1.32.0
     extraMounts:
       - hostPath: "${DATA_PATH}"
         containerPath: /data

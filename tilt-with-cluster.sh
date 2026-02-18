@@ -17,6 +17,8 @@ set -a
 source "${SCRIPT_DIR}/../project.env"
 set +a
 
+export KUBECONFIG="${HOME}/.config/tilt/kubeconfig"
+
 # Find available ports for all TILT_PORT_* variables
 for var in $(env | grep '^TILT_PORT_' | cut -d= -f1); do
     initial_port=$(eval echo \$$var)
